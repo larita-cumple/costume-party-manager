@@ -1,0 +1,40 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 15px;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #6c5ce7;
+    border-color: #6c5ce7;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #5b4cdb;
+    border-color: #5b4cdb;
+    transform: translateY(-2px);
+}
+
+.result-success {
+    color: #28a745;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #d4edda;
+}
+
+.result-error {
+    color: #dc3545;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f8d7da;
+}
+
+.list-group-item {
+    margin-bottom: 5px;
+    border-radius: 8px !important;
+    border: 1px solid rgba(0,0,0,.125);
+} 
