@@ -8,10 +8,78 @@ class CostumeManager {
         this.form = document.getElementById('costumeForm');
         this.resultDiv = document.getElementById('result');
         this.initialize();
+        this.SIMILARITY_THRESHOLD = 0.8; // 80% similarity threshold
     }
 
     initialize() {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
+
+    // Normalize text by removing special characters, extra spaces, and converting to lowercase
+    normalizeText(text) {
+        return text
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
+            .replace(/[^a-z0-9\s]/g, '') // Remove special characters
+            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+            .trim();
+    }
+
+    // Calculate Levenshtein distance between two strings
+    levenshteinDistance(str1, str2) {
+        const matrix = Array(str2.length + 1).fill().map(() => Array(str1.length + 1).fill(0));
+        
+        for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+        for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+        
+        for (let j = 1; j <= str2.length; j++) {
+            for (let i = 1; i <= str1.length; i++) {
+                const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                matrix[j][i] = Math.min(
+                    matrix[j - 1][i] + 1, // deletion
+                    matrix[j][i - 1] + 1, // insertion
+                    matrix[j - 1][i - 1] + cost // substitution
+                );
+            }
+        }
+        return matrix[str2.length][str1.length];
+    }
+
+    // Calculate similarity ratio between two strings
+    calculateSimilarity(str1, str2) {
+        const maxLength = Math.max(str1.length, str2.length);
+        if (maxLength === 0) return 1.0; // Both strings are empty
+        const distance = this.levenshteinDistance(str1, str2);
+        return 1 - distance / maxLength;
+    }
+
+    // Check if two costumes are too similar
+    areCostumesSimilar(costume1, costume2) {
+        const normalized1 = this.normalizeText(costume1);
+        const normalized2 = this.normalizeText(costume2);
+
+        // Check for exact match after normalization
+        if (normalized1 === normalized2) return true;
+
+        // Split into words and check for significant word overlap
+        const words1 = normalized1.split(' ');
+        const words2 = normalized2.split(' ');
+
+        // Check each word combination for similarity
+        for (const word1 of words1) {
+            for (const word2 of words2) {
+                if (word1.length > 3 && word2.length > 3) { // Only compare words longer than 3 characters
+                    const similarity = this.calculateSimilarity(word1, word2);
+                    if (similarity >= this.SIMILARITY_THRESHOLD) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Check overall costume name similarity
+        const overallSimilarity = this.calculateSimilarity(normalized1, normalized2);
+        return overallSimilarity >= this.SIMILARITY_THRESHOLD;
     }
 
     async handleSubmit(e) {
@@ -35,27 +103,32 @@ class CostumeManager {
 
     async checkAndReserveCostume(name, costume) {
         try {
-            // First check if costume exists
+            // Get all costumes to check for similarity
             const { data: existingCostumes, error: checkError } = await supabase
                 .from('costumes')
-                .select('costume')
-                .eq('costume', costume.toLowerCase());
+                .select('costume');
 
             if (checkError) {
                 console.error('Check error:', checkError);
                 return { success: false, message: 'ocurrió un error al verificar el disfraz.' };
             }
 
-            if (existingCostumes && existingCostumes.length > 0) {
-                return { success: false, message: 'este disfraz ya fue reservado. ¡Elegí otro!' };
+            // Check for similar costumes
+            for (const existingCostume of existingCostumes || []) {
+                if (this.areCostumesSimilar(costume, existingCostume.costume)) {
+                    return { 
+                        success: false, 
+                        message: 'ya existe un disfraz muy parecido. ¡Probá con otra idea!' 
+                    };
+                }
             }
 
-            // If costume doesn't exist, create new reservation
+            // If no similar costume exists, create new reservation
             const { data, error: insertError } = await supabase
                 .from('costumes')
                 .insert([{ 
                     name: name,
-                    costume: costume.toLowerCase()
+                    costume: this.normalizeText(costume)
                 }]);
 
             if (insertError) {
