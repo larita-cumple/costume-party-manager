@@ -1,5 +1,5 @@
 // Replace this with your Google Apps Script deployment ID
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw--m9fvDpdoVxCPT0E-kyeHRplMcNtnXAecKiA-xVaoPNY_hT465KP4J3HAWtThPlD/exec';
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw--m9fvDpdoVxCPT0E-kyeHRplMcNtnXAecKiA-xVaoPNY_hT465KP4J3HAWtThPlD/exec";
 
 class CostumeManager {
     constructor() {
