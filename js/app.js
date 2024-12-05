@@ -36,6 +36,7 @@ class CostumeManager {
     async checkAndReserveCostume(name, costume) {
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
+            mode: 'cors',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -53,6 +54,7 @@ class CostumeManager {
         try {
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
+                mode: 'cors',
                 headers: {
                     'Content-Type': 'application/json',
                 },
